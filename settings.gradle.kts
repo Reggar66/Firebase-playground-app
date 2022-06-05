@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Firebase-playground-app"
-include ':app'
+include (":app")

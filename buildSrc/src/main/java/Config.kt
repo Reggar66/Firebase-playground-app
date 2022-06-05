@@ -6,7 +6,7 @@ object Config {
         const val core = "androidx.core:core-ktx:$version"
     }
 
-    object Activity{
+    object Activity {
         private const val version = "1.4.0"
 
         const val activityCompose = "androidx.activity:activity-compose:$version"
@@ -26,6 +26,14 @@ object Config {
 
         const val runtimeKtx = "androidx.lifecycle:lifecycle-runtime-ktx:$version"
         const val viewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose:$version"
+    }
+
+    object Firebase {
+        private const val bomVersion = "30.1.0"
+
+        const val bom = "com.google.firebase:firebase-bom:$bomVersion"
+        const val analytics = "com.google.firebase:firebase-analytics-ktx"
+        /* Add other firebase products */
     }
 
     object Koin {

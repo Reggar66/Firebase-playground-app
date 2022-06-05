@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -61,6 +62,9 @@ dependencies {
 
     implementation(Config.LifeCycle.runtimeKtx)
     implementation(Config.LifeCycle.viewModelCompose)
+
+    implementation(platform(Config.Firebase.bom))
+    implementation(Config.Firebase.analytics)
 
 
     // TODO move tests to Config object
