@@ -65,6 +65,7 @@ dependencies {
 
     implementation(platform(Config.Firebase.bom))
     implementation(Config.Firebase.analytics)
+    implementation(Config.Firebase.database)
 
 
     // TODO move tests to Config object

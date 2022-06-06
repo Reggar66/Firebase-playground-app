@@ -33,7 +33,7 @@ object Config {
 
         const val bom = "com.google.firebase:firebase-bom:$bomVersion"
         const val analytics = "com.google.firebase:firebase-analytics-ktx"
-        /* Add other firebase products */
+        const val database = "com.google.firebase:firebase-database-ktx"
     }
 
     object Koin {
