@@ -63,6 +63,8 @@ dependencies {
     implementation(Config.LifeCycle.runtimeKtx)
     implementation(Config.LifeCycle.viewModelCompose)
 
+    implementation(Config.Navigation.navigation)
+
     implementation(platform(Config.Firebase.bom))
     implementation(Config.Firebase.analytics)
     implementation(Config.Firebase.database)

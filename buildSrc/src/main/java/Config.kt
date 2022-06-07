@@ -21,6 +21,12 @@ object Config {
         const val liveData = "androidx.compose.runtime:runtime-livedata:$version"
     }
 
+    object Navigation {
+        private const val version = "2.4.2"
+
+        const val navigation = "androidx.navigation:navigation-compose:$version"
+    }
+
     object LifeCycle {
         private const val version = "2.4.1"
 
