@@ -59,6 +59,7 @@ dependencies {
     implementation(Config.Compose.ui)
     implementation(Config.Compose.material)
     implementation(Config.Compose.preview)
+    implementation(Config.Compose.liveData)
 
     implementation(Config.LifeCycle.runtimeKtx)
     implementation(Config.LifeCycle.viewModelCompose)
