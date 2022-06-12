@@ -13,7 +13,7 @@ object Config {
     }
 
     object Compose {
-        const val version = "1.1.1"
+        const val version = "1.1.1" // It is not private. It is used in build.gradle.kts
 
         const val ui = "androidx.compose.ui:ui:$version"
         const val material = "androidx.compose.material:material:$version"

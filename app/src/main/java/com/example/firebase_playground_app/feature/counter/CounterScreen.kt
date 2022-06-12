@@ -1,27 +1,33 @@
 package com.example.firebase_playground_app.feature.counter
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Button
-import androidx.compose.material.Card
-import androidx.compose.material.Text
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.firebase_playground_app.feature.Screen
 import com.example.firebase_playground_app.model.Thing
-import com.example.firebase_playground_app.utilities.dlog
+import kotlinx.coroutines.launch
 
 object CounterScreen : Screen("counter") {
     @Composable
@@ -31,29 +37,51 @@ object CounterScreen : Screen("counter") {
 }
 
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun CounterScreen(viewModel: CounterViewModel = viewModel()) {
-    CounterScreenImpl(
-        things = viewModel.things,
-        onButtonClick = {
-            viewModel.addThing(Thing("Test", 111))
+fun CounterScreen(
+    viewModel: CounterViewModel = viewModel(),
+) {
+    val scope = rememberCoroutineScope()
+    val sheetState =
+        rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
-        },
-        onItemClick = { key ->
-            //viewModel.removeThing(key)
-        },
-        onItemRightClick = { viewModel.increase(it) },
-        onItemLeftClick = {}
-    )
+    ModalBottomSheetLayout(
+        sheetState = sheetState,
+        scrimColor = Color.Transparent,
+        sheetContent = {
+            BottomSheetContent(onClick = { name, value ->
+                viewModel.addThing(
+                    name,
+                    value
+                )
+            })
+        }
+
+    ) {
+        CounterScreenImpl(
+            things = viewModel.things,
+            onButtonClick = {
+                scope.launch {
+                    sheetState.show()
+                }
+            },
+            onItemClick = { /*viewModel.removeThing(key)*/ },
+            onItemLongClick = { viewModel.removeThing(it.first) },
+            onItemRightClick = { viewModel.increase(it) },
+            onItemLeftClick = { viewModel.decrease(it) }
+        )
+    }
 }
 
 @Composable
 private fun CounterScreenImpl(
     things: List<Pair<String, Thing>>,
     onButtonClick: () -> Unit,
-    onItemClick: (key: String) -> Unit,
-    onItemRightClick: (key: String) -> Unit,
-    onItemLeftClick: (key: String) -> Unit
+    onItemClick: (item: Pair<String, Thing>) -> Unit,
+    onItemLongClick: (item: Pair<String, Thing>) -> Unit,
+    onItemRightClick: (item: Pair<String, Thing>) -> Unit,
+    onItemLeftClick: (item: Pair<String, Thing>) -> Unit
 ) {
     Box(Modifier.fillMaxSize()) {
 
@@ -65,9 +93,10 @@ private fun CounterScreenImpl(
             items(things) { thingPair ->
                 ThingItem(
                     thing = thingPair.second,
-                    onItemClick = { onItemClick(thingPair.first) },
-                    onRightClick = { onItemRightClick(thingPair.first) },
-                    onLeftClick = { onItemLeftClick(thingPair.first) })
+                    onItemClick = { onItemClick(thingPair) },
+                    onItemLongClick = { onItemLongClick(thingPair) },
+                    onRightClick = { onItemRightClick(thingPair) },
+                    onLeftClick = { onItemLeftClick(thingPair) })
             }
         }
 
@@ -85,10 +114,12 @@ private fun CounterScreenImpl(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ThingItem(
     thing: Thing,
     onItemClick: () -> Unit,
+    onItemLongClick: () -> Unit,
     onRightClick: () -> Unit,
     onLeftClick: () -> Unit
 ) {
@@ -98,9 +129,11 @@ private fun ThingItem(
             .height(IntrinsicSize.Min),
         shape = CircleShape
     ) {
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .clickable { onItemClick.invoke() })
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .combinedClickable(onLongClick = onItemLongClick, onClick = onItemClick)
+        )
 
         Row(
             modifier = Modifier
@@ -111,11 +144,13 @@ private fun ThingItem(
         ) {
 
             Image(
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(bounded = false),
-                    onClick = { onLeftClick.invoke() }
-                ),
+                modifier = Modifier
+                    .size(50.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = false),
+                        onClick = { onLeftClick.invoke() }
+                    ),
                 imageVector = Icons.Rounded.KeyboardArrowLeft,
                 contentDescription = ""
             )
@@ -131,14 +166,63 @@ private fun ThingItem(
             }
 
             Image(
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(bounded = false),
-                    onClick = { onRightClick.invoke() }
-                ),
+                modifier = Modifier
+                    .size(50.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = false),
+                        onClick = { onRightClick.invoke() }
+                    ),
                 imageVector = Icons.Rounded.KeyboardArrowRight,
                 contentDescription = ""
             )
+        }
+    }
+}
+
+@Composable
+private fun BottomSheetContent(onClick: (name: String, value: String) -> Unit) {
+
+    var text by remember {
+        mutableStateOf("")
+    }
+
+    var value by remember {
+        mutableStateOf("")
+    }
+
+    val focusRequesterName = remember { FocusRequester() }
+    val focusRequesterValue = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier
+            .weight(1f)
+            .padding(horizontal = 8.dp)) {
+            OutlinedTextField(
+                modifier = Modifier
+                    .focusRequester(focusRequesterName)
+                    .fillMaxWidth(),
+                value = text,
+                onValueChange = { text = it },
+                label = { Text(text = "Name") })
+            OutlinedTextField(
+                modifier = Modifier
+                    .focusRequester(focusRequesterValue)
+                    .fillMaxWidth(),
+                value = value,
+                onValueChange = { value = it },
+                label = { Text(text = "Value") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+        }
+        Button(onClick = {
+            onClick(text, value)
+            text = ""
+            value = ""
+            focusManager.clearFocus()
+        }) {
+            Text(text = "Ok")
         }
     }
 }
@@ -153,5 +237,11 @@ private val mockThings = listOf(
 @Preview(showBackground = true)
 @Composable
 private fun CounterScreenPreview() {
-    CounterScreenImpl(mockThings, {}, {}, {}) {}
+    CounterScreenImpl(mockThings, {}, {}, {}, {}) {}
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BottomSheetContentPreview() {
+    BottomSheetContent() { _, _ -> }
 }

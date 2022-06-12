@@ -10,6 +10,7 @@ import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ktx.getValue
+import kotlinx.coroutines.flow.callbackFlow
 
 class CounterViewModel : ViewModel() {
 
@@ -18,9 +19,9 @@ class CounterViewModel : ViewModel() {
     private val listener = object : ChildEventListener {
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
             dlog { "onChildAdded: ${snapshot.key}" }
-            dlog { "List: " }
+            dlog { "Item: " }
             snapshot.children.forEach {
-                dlog { "    ${it.key}" }
+                dlog { "    ${it.key}: ${it.value}" }
             }
             val key = snapshot.key
             val thing = snapshot.getValue<Thing>()
@@ -30,19 +31,27 @@ class CounterViewModel : ViewModel() {
 
         override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
             dlog { "onChildChanged: ${snapshot.key}" }
-            dlog { "List: " }
+            dlog { "Item: " }
             snapshot.children.forEach {
-                dlog { "    ${it.key}" }
+                dlog { "    ${it.key}: ${it.value}" }
             }
 
-            // TODO update list with changed item
+            val key = snapshot.key
+            val thing = snapshot.getValue<Thing>()
+            if (key != null && thing != null)
+                things.replaceAll {
+                    if (it.first == key)
+                        key to thing
+                    else
+                        it
+                }
         }
 
         override fun onChildRemoved(snapshot: DataSnapshot) {
             dlog { "onChildRemoved: ${snapshot.key}" }
-            dlog { "List: " }
+            dlog { "Item: " }
             snapshot.children.forEach {
-                dlog { "    ${it.key}" }
+                dlog { "    ${it.key}: ${it.value}" }
             }
 
             val key = snapshot.key
@@ -52,7 +61,7 @@ class CounterViewModel : ViewModel() {
 
         override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
             dlog { "onChildMoved: ${snapshot.key}" }
-            dlog { "List: " }
+            dlog { "Item: " }
             snapshot.children.forEach {
                 dlog { "    ${it.key}" }
             }
@@ -67,31 +76,43 @@ class CounterViewModel : ViewModel() {
         Database.ref.child(DbPath.items).addChildEventListener(listener)
     }
 
-    fun addThing(thing: Thing) {
-        val id = Database.ref.push().key
-        if (id == null) {
-            dlog { "Couldn't get push key for thing." }
-            return
+    fun addThing(name: String, amount: String) {
+        amount.toLongOrNull()?.let {
+            val thing = Thing(name, it)
+            val id = Database.ref.push().key
+            if (id == null) {
+                dlog { "Couldn't get push key for thing." }
+                return
+            }
+            Database.ref.child(DbPath.items).child(id).setValue(thing)
         }
-        Database.ref.child(DbPath.items).child(id).setValue(thing)
     }
 
     fun removeThing(key: String) {
         Database.ref.child(DbPath.items + "/$key").ref.removeValue()
     }
 
-    fun decrease() {
-
+    fun decrease(item: Pair<String, Thing>) {
+        val newAmount = item.second.amount?.minus(1)
+        if (newAmount != null) {
+            update(item, newAmount)
+        }
     }
 
-    fun increase(key: String) {
+    fun increase(item: Pair<String, Thing>) {
+        val newAmount = item.second.amount?.plus(1)
+        if (newAmount != null) {
+            update(item, newAmount)
+        }
+    }
 
-        // TODO it updates item with given ID. Make it increase value instead of replacing all values
-        val thing = Thing("New Name", 333)
+    private fun update(item: Pair<String, Thing>, newAmount: Long) {
+
+        val thing = item.second.copy(amount = newAmount)
         val thingValues = thing.toMap()
 
         val updates = hashMapOf<String, Any>(
-            "/items/$key" to thingValues
+            "/items/${item.first}" to thingValues
         )
 
         Database.ref.updateChildren(updates)
