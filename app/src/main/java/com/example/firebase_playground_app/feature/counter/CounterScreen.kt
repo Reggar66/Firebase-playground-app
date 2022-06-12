@@ -1,12 +1,11 @@
 package com.example.firebase_playground_app.feature.counter
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,6 +16,7 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.firebase_playground_app.feature.Screen
 import com.example.firebase_playground_app.model.Thing
+import com.example.firebase_playground_app.model.ThingColor
+import com.example.firebase_playground_app.model.ThingColorData
 import kotlinx.coroutines.launch
 
 object CounterScreen : Screen("counter") {
@@ -50,12 +52,18 @@ fun CounterScreen(
         sheetState = sheetState,
         scrimColor = Color.Transparent,
         sheetContent = {
-            BottomSheetContent(onClick = { name, value ->
-                viewModel.addThing(
-                    name,
-                    value
-                )
-            })
+            BottomSheetContent(
+                colorsData = viewModel.thingColors,
+                onClick = { name, value ->
+                    viewModel.addThing(
+                        name,
+                        value
+                    )
+                },
+                onColorClick = {
+                    viewModel.pickColor(it)
+                }
+            )
         }
 
     ) {
@@ -127,7 +135,9 @@ private fun ThingItem(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min),
-        shape = CircleShape
+        shape = CircleShape,
+        backgroundColor = thing.color?.let { ThingColor.valueOf(it).color }
+            ?: MaterialTheme.colors.surface
     ) {
         Box(
             modifier = Modifier
@@ -181,7 +191,11 @@ private fun ThingItem(
 }
 
 @Composable
-private fun BottomSheetContent(onClick: (name: String, value: String) -> Unit) {
+private fun BottomSheetContent(
+    colorsData: List<ThingColorData>,
+    onClick: (name: String, value: String) -> Unit,
+    onColorClick: (thingColor: ThingColor) -> Unit
+) {
 
     var text by remember {
         mutableStateOf("")
@@ -196,9 +210,14 @@ private fun BottomSheetContent(onClick: (name: String, value: String) -> Unit) {
     val focusManager = LocalFocusManager.current
 
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier
-            .weight(1f)
-            .padding(horizontal = 8.dp)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp)
+        ) {
+
+            ColorPicker(colorsData, onColorClick = onColorClick)
+
             OutlinedTextField(
                 modifier = Modifier
                     .focusRequester(focusRequesterName)
@@ -227,12 +246,52 @@ private fun BottomSheetContent(onClick: (name: String, value: String) -> Unit) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ColorPicker(
+    colorsData: List<ThingColorData>,
+    onColorClick: (thingColor: ThingColor) -> Unit
+) {
+    LazyVerticalGrid(
+        cells = GridCells.Adaptive(minSize = 50.dp),
+        contentPadding = PaddingValues(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        items(colorsData) { color ->
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(CircleShape)
+                    .background(color = color.thingColor.color)
+                    .border(
+                        border = BorderStroke(
+                            width = 4.dp,
+                            color = if (color.selected) Color.Black else Color.Transparent
+                        ),
+                        shape = CircleShape
+                    )
+                    .clickable { onColorClick.invoke(color.thingColor) }
+            )
+        }
+    }
+}
+
 private val mockThings = listOf(
     "1" to Thing("Thing 1", 1),
     "2" to Thing("Thing 2", 2),
     "3" to Thing("Thing 3", 3),
     "4" to Thing("Thing 4", 4)
 )
+
+private val mockColorData: List<ThingColorData>
+    get() {
+        val colors = mutableListOf<ThingColorData>()
+        ThingColor.values().forEach {
+            colors.add(ThingColorData(it, it == ThingColor.Red))
+        }
+        return colors
+    }
 
 @Preview(showBackground = true)
 @Composable
@@ -243,5 +302,5 @@ private fun CounterScreenPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun BottomSheetContentPreview() {
-    BottomSheetContent() { _, _ -> }
+    BottomSheetContent(colorsData = mockColorData, { _, _ -> }, {})
 }

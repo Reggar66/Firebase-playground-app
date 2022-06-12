@@ -3,6 +3,8 @@ package com.example.firebase_playground_app.feature.counter
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import com.example.firebase_playground_app.model.Thing
+import com.example.firebase_playground_app.model.ThingColor
+import com.example.firebase_playground_app.model.ThingColorData
 import com.example.firebase_playground_app.repository.Database
 import com.example.firebase_playground_app.repository.DbPath
 import com.example.firebase_playground_app.utilities.dlog
@@ -14,7 +16,11 @@ import kotlinx.coroutines.flow.callbackFlow
 
 class CounterViewModel : ViewModel() {
 
+    private var currentColor: ThingColor = ThingColor.Red
+
     val things = mutableStateListOf<Pair<String, Thing>>()
+
+    val thingColors = mutableStateListOf<ThingColorData>()
 
     private val listener = object : ChildEventListener {
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -73,12 +79,27 @@ class CounterViewModel : ViewModel() {
     }
 
     init {
+        ThingColor.values().forEach {
+            thingColors.add(ThingColorData(it, it == ThingColor.Red))
+        }
         Database.ref.child(DbPath.items).addChildEventListener(listener)
+    }
+
+
+    fun pickColor(color: ThingColor) {
+        thingColors.replaceAll {
+            if (it.thingColor == color) {
+                it.copy(selected = true).also {
+                    currentColor = it.thingColor
+                }
+            } else
+                it.copy(selected = false)
+        }
     }
 
     fun addThing(name: String, amount: String) {
         amount.toLongOrNull()?.let {
-            val thing = Thing(name, it)
+            val thing = Thing(name, it, currentColor.name)
             val id = Database.ref.push().key
             if (id == null) {
                 dlog { "Couldn't get push key for thing." }
