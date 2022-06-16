@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.firebase_playground_app.feature.counter.CounterScreen
+import com.example.firebase_playground_app.feature.signIn.SignInScreen
 import com.example.firebase_playground_app.ui.theme.FirebaseplaygroundappTheme
 
 @Composable
@@ -29,15 +30,16 @@ fun MainScreen() {
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = CounterScreen.route) {
-        composable(CounterScreen.route) { CounterScreen.Content() }
+    NavHost(navController = navController, startDestination = SignInScreen.route) {
+        composable(CounterScreen.route) { CounterScreen.Content(navController) }
+        composable(SignInScreen.route) { SignInScreen.Content(navController) }
     }
 }
 
 
 abstract class Screen(val route: String) {
     @Composable
-    abstract fun Content()
+    abstract fun Content(navController: NavController)
 }
 
 @Preview

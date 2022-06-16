@@ -17,6 +17,7 @@ import com.example.firebase_playground_app.feature.MainScreen
 import com.example.firebase_playground_app.model.User
 import com.example.firebase_playground_app.repository.Database
 import com.example.firebase_playground_app.ui.theme.FirebaseplaygroundappTheme
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener

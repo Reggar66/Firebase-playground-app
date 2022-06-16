@@ -50,8 +50,6 @@ android {
 }
 
 dependencies {
-
-
     implementation(Config.Core.core)
 
     implementation(Config.Activity.activityCompose)
@@ -69,6 +67,7 @@ dependencies {
     implementation(platform(Config.Firebase.bom))
     implementation(Config.Firebase.analytics)
     implementation(Config.Firebase.database)
+    implementation(Config.Firebase.auth)
 
 
     // TODO move tests to Config object

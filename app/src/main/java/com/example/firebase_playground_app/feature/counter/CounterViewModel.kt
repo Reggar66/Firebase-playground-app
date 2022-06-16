@@ -8,13 +8,19 @@ import com.example.firebase_playground_app.model.ThingColorData
 import com.example.firebase_playground_app.repository.Database
 import com.example.firebase_playground_app.repository.DbPath
 import com.example.firebase_playground_app.utilities.dlog
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ktx.getValue
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.callbackFlow
 
 class CounterViewModel : ViewModel() {
+
+    private val auth by lazy { Firebase.auth }
+    private var currentUser: FirebaseUser? = auth.currentUser
 
     private var currentColor: ThingColor = ThingColor.Red
 
@@ -79,12 +85,12 @@ class CounterViewModel : ViewModel() {
     }
 
     init {
+        dlog { "CounterViewModel init(): signedIn: ${currentUser != null}" }
         ThingColor.values().forEach {
             thingColors.add(ThingColorData(it, it == ThingColor.Red))
         }
-        Database.ref.child(DbPath.items).addChildEventListener(listener)
+        Database.ref.child(getItemsPath()).addChildEventListener(listener)
     }
-
 
     fun pickColor(color: ThingColor) {
         thingColors.replaceAll {
@@ -105,12 +111,12 @@ class CounterViewModel : ViewModel() {
                 dlog { "Couldn't get push key for thing." }
                 return
             }
-            Database.ref.child(DbPath.items).child(id).setValue(thing)
+            Database.ref.child(getItemsPath()).child(id).setValue(thing)
         }
     }
 
     fun removeThing(key: String) {
-        Database.ref.child(DbPath.items + "/$key").ref.removeValue()
+        Database.ref.child(getItemsPath() + "/$key").ref.removeValue()
     }
 
     fun decrease(item: Pair<String, Thing>) {
@@ -133,9 +139,11 @@ class CounterViewModel : ViewModel() {
         val thingValues = thing.toMap()
 
         val updates = hashMapOf<String, Any>(
-            "/items/${item.first}" to thingValues
+            getItemsPath() + "/${item.first}" to thingValues
         )
 
         Database.ref.updateChildren(updates)
     }
+
+    private fun getItemsPath() = "/items/UID-${currentUser?.uid}"
 }

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.firebase_playground_app.feature.Screen
 import com.example.firebase_playground_app.model.Thing
 import com.example.firebase_playground_app.model.ThingColor
@@ -33,7 +34,7 @@ import kotlinx.coroutines.launch
 
 object CounterScreen : Screen("counter") {
     @Composable
-    override fun Content() {
+    override fun Content(navController: NavController) {
         CounterScreen()
     }
 }
