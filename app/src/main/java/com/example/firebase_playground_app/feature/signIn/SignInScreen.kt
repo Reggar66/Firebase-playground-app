@@ -1,7 +1,6 @@
 package com.example.firebase_playground_app.feature.signIn
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
@@ -146,14 +145,29 @@ fun MailLogin(signIn: (email: String, password: String) -> Unit, onBack: () -> U
         )
 
         Spacer(modifier = Modifier.height(20.dp))
-        Row {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             Button(onClick = { signIn.invoke(mail, password) }) {
                 Text(text = "SignIn")
             }
-            Spacer(modifier = Modifier.width(20.dp))
             Button(onClick = { onBack.invoke() }) {
                 Text(text = "Back")
             }
+        }
+        TestUsersButtons(onUserPicked = { email, pass ->
+            mail = email
+            password = pass
+        })
+    }
+}
+
+@Composable
+private fun TestUsersButtons(onUserPicked: (email: String, pass: String) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        Button(onClick = { onUserPicked("test1@mail.com", "123456") }) {
+            Text(text = "Test1 user")
+        }
+        Button(onClick = { onUserPicked("test2@mail.com", "123456") }) {
+            Text(text = "Test2 user")
         }
     }
 }
